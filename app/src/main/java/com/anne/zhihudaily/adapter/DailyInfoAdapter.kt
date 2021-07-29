@@ -14,16 +14,18 @@ import com.anne.zhihudaily.model.LatestInfoGson
 import com.anne.zhihudaily.view.IndicatorView
 import com.facebook.drawee.view.SimpleDraweeView
 
-class DailyInfoAdapter(val callback: FragmentCallBack): RecyclerView.Adapter<DailyInfoAdapter.BaseViewHolder>() {
+class DailyInfoAdapter(val callback: FragmentCallBack) :
+    RecyclerView.Adapter<DailyInfoAdapter.BaseViewHolder>() {
 
     private var mInfo: ArrayList<StoryWrapper> = ArrayList()
     private var mTopStories: ArrayList<LatestInfoGson.TopStoriesBean> = ArrayList()
-    private val mStoryOnClickListener: View.OnClickListener = View.OnClickListener {
-
+    private val mStoryOnClickListener: View.OnClickListener = View.OnClickListener { view ->
+        Toast.makeText(view.context, "click info ${view.tag}", Toast.LENGTH_SHORT).show()
+        callback.toActivity(mInfo[view.tag as Int].url)
     }
 
     companion object {
-        val LOG_TAG:String = DailyInfoAdapter::class.java.simpleName
+        val LOG_TAG: String = DailyInfoAdapter::class.java.simpleName
         val TYPE_TOP_STORIES = -1
         val TYPE_STORIES = -2
         val TYPE_CATEGORY = -3
@@ -33,37 +35,39 @@ class DailyInfoAdapter(val callback: FragmentCallBack): RecyclerView.Adapter<Dai
         return mInfo[position].type
     }
 
-    inner open class BaseViewHolder(itemView: View): RecyclerView.ViewHolder(itemView){
-        init {
-
-        }
-        open fun bindView(position: Int){}
-
-    }
-
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
-        Log.d(LOG_TAG,"onCreateViewHolder viewTYPe: ${viewType}")
+        Log.d(LOG_TAG, "onCreateViewHolder viewTYPe: $viewType")
         return when (viewType) {
             TYPE_TOP_STORIES -> return TopStoriesViewHolder(
-                LayoutInflater.from(parent?.context).inflate(R.layout.info_item_topstories, parent, false)
+                LayoutInflater.from(parent?.context)
+                    .inflate(R.layout.info_item_topstories, parent, false)
             )
-//            TYPE_TOP_STORIES -> return TopStoriesViewHolder(
-//                LayoutInflater.from(parent?.context).inflate(R.layout.activity_main, parent, false)
-//            )
+            TYPE_CATEGORY -> return CategoryViewHolder(
+                LayoutInflater.from(parent?.context)
+                    .inflate(R.layout.info_item_category, parent, false)
+            )
+            TYPE_STORIES -> return StoryHolder(
+                LayoutInflater.from(parent?.context)
+                    .inflate(R.layout.info_item_story, parent, false)
+            )
             else -> BaseViewHolder(View(parent?.context))
         }
     }
 
     override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
-        TODO("Not yet implemented")
+        Log.d(
+            LOG_TAG,
+            "onBindViewHolder viewTYPe: ${holder!!.javaClass.simpleName},position: $position"
+        )
         holder.bindView(position)
     }
 
     override fun getItemCount(): Int {
-       return mInfo.size
+        return mInfo.size
     }
-    fun add(topStories: List<LatestInfoGson.TopStoriesBean>, info:List<StoryWrapper>){
+
+    fun add(topStories: List<LatestInfoGson.TopStoriesBean>, info: List<StoryWrapper>) {
         mTopStories.clear()
         mTopStories.addAll(topStories)
 
@@ -72,7 +76,36 @@ class DailyInfoAdapter(val callback: FragmentCallBack): RecyclerView.Adapter<Dai
         notifyDataSetChanged()
     }
 
-    inner  class TopStoriesViewHolder(itemView: View) : BaseViewHolder(itemView) {
+    fun add(info: ArrayList<StoryWrapper>) {
+        mInfo.addAll(info)
+        notifyDataSetChanged()
+    }
+
+
+    fun getDescription(position: Int): String {
+        if (position < mInfo.size) {
+            when (mInfo[position].type) {
+                TYPE_TOP_STORIES -> return mInfo[position].des
+                TYPE_CATEGORY -> return mInfo[position].des
+                TYPE_STORIES -> return mInfo[position].des
+                else -> return ""
+            }
+        } else {
+            return ""
+        }
+    }
+
+    inner open class BaseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+
+        init {
+        }
+
+        open fun bindView(position: Int) {
+
+        }
+    }
+
+    inner class TopStoriesViewHolder(itemView: View) : BaseViewHolder(itemView) {
         var mViewPager: ViewPager? = null
         var mIndicator: IndicatorView? = null
 
@@ -85,11 +118,11 @@ class DailyInfoAdapter(val callback: FragmentCallBack): RecyclerView.Adapter<Dai
             super.bindView(position)
             val stories: ArrayList<View> = ArrayList()
 
-            val listener:View.OnClickListener = View.OnClickListener {
-                v ->  Toast.makeText(v.context,"click top stories${v.tag}",Toast.LENGTH_LONG).show()
+            val listener: View.OnClickListener = View.OnClickListener { v ->
+                Toast.makeText(v.context, "click top stories${v.tag}", Toast.LENGTH_LONG).show()
                 callback.toActivity(mTopStories[v.tag as Int].id.toString())
             }//未写
-            for (i in 0 until  mTopStories.size) {
+            for (i in 0 until mTopStories.size) {
                 val v: View = LayoutInflater.from(itemView.context)
                     .inflate(R.layout.info_item_topstories, null)
                 v.tag = i
@@ -122,24 +155,51 @@ class DailyInfoAdapter(val callback: FragmentCallBack): RecyclerView.Adapter<Dai
                 }
             }
 
-            mViewPager!!.addOnPageChangeListener(object : ViewPager.SimpleOnPageChangeListener(){
+            mViewPager!!.addOnPageChangeListener(object : ViewPager.SimpleOnPageChangeListener() {
                 override fun onPageScrolled(
                     position: Int,
                     positionOffset: Float,
                     positionOffsetPixels: Int
                 ) {
-                    mIndicator?.moveIndicator(position,positionOffset,positionOffsetPixels)
+                    mIndicator?.moveIndicator(position, positionOffset, positionOffsetPixels)
                 }
+
                 override fun onPageSelected(position: Int) {
-                   mIndicator?.setCurrentPosition(position)
+                    mIndicator?.setCurrentPosition(position)
                 }
             })
         }
     }
 
-    data class StoryWrapper(val type: Int, val imageUrl: String, val url: String, val title: String, val des: String)
+    inner class CategoryViewHolder(itemView: View) : BaseViewHolder(itemView) {
 
-    interface FragmentCallBack{
+        override fun bindView(position: Int) {
+            (itemView.findViewById(R.id.category) as TextView).text = mInfo[position].title
+        }
+    }
+
+    inner class StoryHolder(itemView: View) : BaseViewHolder(itemView) {
+
+        override fun bindView(position: Int) {
+            val title: TextView = itemView.findViewById(R.id.title) as TextView
+            title.text = mInfo[position].title
+            val image: SimpleDraweeView = itemView.findViewById(R.id.image) as SimpleDraweeView
+            image.setImageURI(mInfo[position].imageUrl)
+            itemView.tag = position
+            itemView.setOnClickListener(mStoryOnClickListener)
+        }
+    }
+
+
+    data class StoryWrapper(
+        val type: Int,
+        val imageUrl: String,
+        val url: String,
+        val title: String,
+        val des: String
+    )
+
+    interface FragmentCallBack {
         fun toActivity(id: String)
     }
 }

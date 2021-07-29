@@ -5,12 +5,17 @@
     android:id="@+id/mobile_navigation"
     app:startDestination="@+id/nav_home">
 
+
+<!--    <fragment-->
+<!--        android:id="@+id/nav_home"-->
+<!--        android:name="com.anne.zhihudaily.ui.home.HomeFragment"-->
+<!--        android:label="@string/menu_home"-->
+<!--        tools:layout="@layout/fragment_home" />-->
     <fragment
         android:id="@+id/nav_home"
-        android:name="com.anne.zhihudaily.ui.home.HomeFragment"
-        android:label="@string/menu_home"
-        tools:layout="@layout/fragment_home" />
-
+        android:name="com.anne.zhihudaily.ui.DailyInfoFragment"
+        android:label="@string/menu_home_test"
+        tools:layout="@layout/fragment_dailyinfo" />
     <fragment
         android:id="@+id/nav_gallery"
         android:name="com.anne.zhihudaily.ui.gallery.GalleryFragment"
